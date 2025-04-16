@@ -1,0 +1,111 @@
+:root {
+    --frame-padding: 14px;
+    --grid-bg-color: lightgray;
+    --frame-bg-color: rgb(191, 191, 191);
+}
+
+body {
+    margin: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    background-color: black;
+}
+
+#window {
+    background-color: blue;
+    /* margin: 2em; */
+    padding: 10px;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+}
+
+.title {
+    color: white;
+    margin: .5em 0;
+    font-size: 1.7rem;
+}
+
+.window-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.window-controls {
+    display: flex;
+    gap: 4;
+}
+
+.window-controls .control-item {
+    height: 36px;
+    width: 36px;
+    border-radius: 5px;
+    border: 1px solid white
+}
+
+#content {
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+}
+
+.tool-bar {
+    padding: 8px;
+    display: flex;
+    gap: 1em;
+    background-color: beige;
+}
+
+.tool-bar .item {
+    font-size: 1.3rem;
+    
+}
+
+#game {
+    background-color: var(--frame-bg-color);
+}
+
+.frame {
+    padding: var(--frame-padding);
+}
+
+.scoreboard-container {
+    height: 80px;
+}
+
+.scoreboard {
+    padding: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--grid-bg-color);
+    border: 1px solid gray;
+}
+
+.status-icon {
+    font-size: 3rem;
+}
+
+.counter {
+    padding: 6px;
+    height: 100%;
+    width: 100px;
+    background-color: rgb(73, 18, 18);
+    color: red;
+    font-size: 3.5rem;
+    text-align: center;
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+.grid {
+    border: 1px solid gray;
+    height: 600px;
+    width: 600px;
+}
+
+
+
+img {
+    width: 600px;
+}
