@@ -71,7 +71,6 @@ body {
 }
 
 .scoreboard-container {
-    height: 80px;
 }
 
 .scoreboard {
@@ -98,10 +97,29 @@ body {
     font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
-.grid {
+#grid {
+    padding: 6px;
     border: 1px solid gray;
+    background-color: darkgray;
     height: 600px;
     width: 600px;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr); /* todo make column size dynamic */
+}
+
+.grid-item {
+    padding: 4px;
+    background-color: var(--grid-bg-color);
+    border: 1px solid var(--frame-bg-color);
+    color: rgb(190, 190, 190);
+    column-span: 1;
+    
+}
+
+.grid-item[data-has-flag="true"] {
+    background-image: url("./public/logo.png"); /* todo find flag icon */ 
+    background-size: contain;
+    opacity: 60%;
 }
 
 
