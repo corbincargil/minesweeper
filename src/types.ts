@@ -3,14 +3,14 @@ interface Position {
   y: number;
 }
 
-export interface GridItem {
+export interface Cell {
   //   position: Position;
   //   hasFlag: boolean;
   //   hasMine: boolean;
   index: number;
 }
 
-export type Grid = GridItem[];
+export type Grid = Cell[];
 
 export interface GameState {
   grid: Grid;

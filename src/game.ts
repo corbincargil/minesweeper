@@ -3,7 +3,7 @@ import type { Grid } from "./types";
 export class GameState {
   time: number;
   grid: {
-    items: Grid;
+    cells: Grid;
     size: number;
   };
   flags: {
@@ -34,19 +34,19 @@ export class GameState {
       locations: this.setMineLocations(gridSize, mineCount),
     };
     this.grid = {
-      items: this.createGrid(gridSize),
+      cells: this.createGrid(gridSize),
       size: gridSize,
     };
   }
 
   private createGrid(size: number): Grid {
-    const grid: GridItem[] = [];
+    const grid: Grid = [];
 
     let index = 0;
 
     for (let x = 0; x < size; x++) {
       for (let y = 0; y < size; y++) {
-        grid.push(new GridItem(index, this));
+        grid.push(new Cell(index, this));
         index++;
       }
     }
@@ -67,7 +67,7 @@ export class GameState {
   }
 }
 
-class GridItem {
+class Cell {
   index: number;
   hasMine: boolean;
   hasFlag: boolean;
