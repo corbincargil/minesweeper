@@ -42,25 +42,6 @@ function createGridElement(gridItem: GridItem) {
   return newItem;
 }
 
-function setMineLocations({
-  gridSize,
-  mineLocations,
-  mineCount,
-}: {
-  gridSize: number;
-  mineLocations: Set<number>;
-  mineCount: number;
-}) {
-  let minesPlaced = 0;
-  while (minesPlaced < mineCount) {
-    const randomIndex = Math.floor(Math.random() * gridSize * gridSize);
-    if (!mineLocations.has(randomIndex)) {
-      mineLocations.add(randomIndex);
-      minesPlaced++;
-    }
-  }
-}
-
 function handleLeftClick(e: Event) {
   const clickedItem = e.target as HTMLElement;
 
@@ -144,21 +125,21 @@ function uncoverGridItems(gridIndex: number | null) {
 }
 
 function getSurroundingItems(index: number) {
-  const onTop = index < state.gridSize;
-  const onBottom = index + state.gridSize + 1 > state.grid.length;
-  const onLeft = index === 0 || index % state.gridSize === 0;
-  const onRight = (index + 1) % state.gridSize === 0;
+  const onTop = index < state.grid.size;
+  const onBottom = index + state.grid.size + 1 > state.grid.items.length;
+  const onLeft = index === 0 || index % state.grid.size === 0;
+  const onRight = (index + 1) % state.grid.size === 0;
 
   //* in clock-wise order starting with top-center
   const surroundingItems = new Set([
-    !onTop ? index - state.gridSize : null,
-    !onTop && !onRight ? index - (state.gridSize - 1) : null,
+    !onTop ? index - state.grid.size : null,
+    !onTop && !onRight ? index - (state.grid.size - 1) : null,
     !onRight ? index + 1 : null,
-    !onBottom && !onRight ? index + state.gridSize + 1 : null,
-    !onBottom ? index + state.gridSize : null,
-    !onBottom && !onLeft ? index + (state.gridSize - 1) : null,
+    !onBottom && !onRight ? index + state.grid.size + 1 : null,
+    !onBottom ? index + state.grid.size : null,
+    !onBottom && !onLeft ? index + (state.grid.size - 1) : null,
     !onLeft ? index - 1 : null,
-    !onTop && !onLeft ? index - (state.gridSize + 1) : null,
+    !onTop && !onLeft ? index - (state.grid.size + 1) : null,
   ]);
 
   surroundingItems.delete(null);
@@ -176,10 +157,4 @@ const GRID_SIZE = 9;
 const MINE_COUNT = 10;
 const state = new GameState({ gridSize: GRID_SIZE, mineCount: MINE_COUNT });
 
-setMineLocations({
-  mineLocations: state.mines.locations,
-  mineCount: state.mines.count,
-  gridSize: GRID_SIZE,
-});
-
-renderGrid(state.grid);
+renderGrid(state.grid.items);

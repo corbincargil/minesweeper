@@ -1,9 +1,11 @@
-import type { Grid, GridItem } from "./types";
+import type { Grid } from "./types";
 
 export class GameState {
-  grid: Grid;
-  gridSize: number;
   time: number;
+  grid: {
+    items: Grid;
+    size: number;
+  };
   flags: {
     placed: number;
     locations: Set<number>;
@@ -21,8 +23,6 @@ export class GameState {
     gridSize: number;
     mineCount: number;
   }) {
-    this.grid = createGrid(gridSize);
-    this.gridSize = gridSize;
     this.time = 0;
     this.flags = {
       placed: 0,
@@ -31,26 +31,53 @@ export class GameState {
     this.mines = {
       count: mineCount,
       flagged: 0,
-      locations: new Set(),
+      locations: this.setMineLocations(gridSize, mineCount),
     };
+    this.grid = {
+      items: this.createGrid(gridSize),
+      size: gridSize,
+    };
+  }
+
+  private createGrid(size: number): Grid {
+    const grid: GridItem[] = [];
+
+    let index = 0;
+
+    for (let x = 0; x < size; x++) {
+      for (let y = 0; y < size; y++) {
+        grid.push(new GridItem(index, this));
+        index++;
+      }
+    }
+    return grid;
+  }
+
+  private setMineLocations(gridSize: number, mineCount: number) {
+    let minesPlaced = 0;
+    const mineLocations = new Set<number>();
+    while (minesPlaced < mineCount) {
+      const randomIndex = Math.floor(Math.random() * gridSize * gridSize);
+      if (!mineLocations.has(randomIndex)) {
+        mineLocations.add(randomIndex);
+        minesPlaced++;
+      }
+    }
+    return mineLocations;
   }
 }
 
-export function createGrid(size: number): Grid {
-  const grid: GridItem[] = [];
+class GridItem {
+  index: number;
+  hasMine: boolean;
+  hasFlag: boolean;
+  // isRevealed: boolean;
+  // surroundingMines: number;
 
-  let index = 0;
-
-  for (let x = 0; x < size; x++) {
-    for (let y = 0; y < size; y++) {
-      grid.push({
-        // position: { x, y },
-        // hasFlag: false,
-        // hasMine: state.mines.locations.has(index),
-        index,
-      });
-      index++;
-    }
+  constructor(index: number, state: GameState) {
+    this.index = index;
+    this.hasMine = state.mines.locations.has(index);
+    this.hasFlag = state.flags.locations.has(index);
+    // this.isRevealed =
   }
-  return grid;
 }
