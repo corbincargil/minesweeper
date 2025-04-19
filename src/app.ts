@@ -1,25 +1,13 @@
-import type { Grid, GridItem, GameState } from "./types";
+import { GameState } from "./game";
+import type { Grid, GridItem } from "./types";
 
-function createGrid(size: number): Grid {
-  const grid: GridItem[] = [];
-
-  let index = 0;
-
-  for (let x = 0; x < size; x++) {
-    for (let y = 0; y < size; y++) {
-      grid.push({
-        // position: { x, y },
-        // hasFlag: false,
-        // hasMine: state.mines.locations.has(index),
-        index,
-      });
-      index++;
-    }
-  }
-
-  //   console.log("grid: ", grid);
-  return grid;
-}
+// todo: Refactor code into different folders/files
+// todo: Make first click always safe
+// todo: Add a way to win
+// todo: Handle losing/clicking a mine
+// todo: Timer logic
+// todo: Dynamic flag count
+// todo:
 
 function renderGrid(gridArr: Grid) {
   const gridEl = document.getElementById("grid");
@@ -34,28 +22,24 @@ function createGridElement(gridItem: GridItem) {
   const newItem = document.createElement("div");
   newItem.className = "grid-item";
   //   newItem.textContent = `${gridItem.position.x} , ${gridItem.position.y} `;
-  newItem.textContent = gridItem.index.toString();
+  const indexEl = document.createElement("div");
+  const mineCountEl = document.createElement("div");
+
+  indexEl.textContent = gridItem.index.toString();
+
+  indexEl.classList.add("index");
+  mineCountEl.classList.add("mine-count");
+
+  newItem.append(indexEl);
+  newItem.append(mineCountEl);
+
   newItem.addEventListener("click", handleLeftClick);
   newItem.addEventListener("contextmenu", handleRightClick);
   newItem.dataset.index = gridItem.index.toString();
+  if (state.mines.locations.has(gridItem.index)) {
+    newItem.classList.add("has-mine"); //todo: remove after testing
+  }
   return newItem;
-}
-
-function getInitialGameState(size: number): GameState {
-  return {
-    grid: createGrid(size),
-    gridSize: size,
-    time: 0,
-    flags: {
-      placed: 0,
-      locations: new Set(),
-    },
-    mines: {
-      count: 10,
-      flagged: 0,
-      locations: new Set(),
-    },
-  };
 }
 
 function setMineLocations({
@@ -78,7 +62,16 @@ function setMineLocations({
 }
 
 function handleLeftClick(e: Event) {
-  const gridItem = e.target as HTMLDivElement;
+  const clickedItem = e.target as HTMLElement;
+
+  const gridItem =
+    (clickedItem.closest(".grid-item") as HTMLDivElement) || null;
+
+  if (!gridItem) {
+    console.error("Can't find grid item");
+    return;
+  }
+
   const index = Number(gridItem.dataset.index);
 
   if (state.flags.locations.has(index)) return;
@@ -119,13 +112,35 @@ function handleRightClick(e: Event) {
   gridElement.dataset.hasFlag = "true";
 }
 
-function uncoverGridItems(gridIndex: number) {
-  const item = state.grid[gridIndex];
-  //   console.log(item);
+function uncoverGridItems(gridIndex: number | null) {
+  if (!gridIndex) return; // todo: fix type to not accept null. Need to make surroundingItems not have null values
+
+  const htmlItem = document.querySelector(
+    `[data-index="${gridIndex}"]`
+  ) as HTMLDivElement;
+  if (!htmlItem) {
+    console.error("Could not find grid item with index: ", gridIndex);
+    return;
+  }
+  if (htmlItem.dataset.revealed === "true") return;
+  htmlItem.dataset.revealed = "true";
+
   //* get surrounding items
-  getSurroundingItems(gridIndex);
   //* get count of surrounding mines
+  const { surroundingItems, surroundingMines } = getSurroundingItems(gridIndex);
+
+  const mineCountEl = htmlItem.querySelector(".mine-count");
+  if (!mineCountEl) {
+    console.error("Could not find mine-count element");
+    return;
+  }
+
   //* if count of surrounding mines is 0, get uncover surrounding items (recursion)
+  if (surroundingMines.size === 0) {
+    surroundingItems.forEach((i) => uncoverGridItems(i));
+  } else {
+    mineCountEl.textContent = surroundingMines.size.toString();
+  }
 }
 
 function getSurroundingItems(index: number) {
@@ -134,18 +149,32 @@ function getSurroundingItems(index: number) {
   const onLeft = index === 0 || index % state.gridSize === 0;
   const onRight = (index + 1) % state.gridSize === 0;
 
-  //todo use the above to get the surrounding items.
-  //   const surroundingItems = new Set([
-  //     !onTop ?? index - state.gridSize,
-  //     (!onTop && !onLeft) ?? index - (state.gridSize + 1),
-  //   ]);
+  //* in clock-wise order starting with top-center
+  const surroundingItems = new Set([
+    !onTop ? index - state.gridSize : null,
+    !onTop && !onRight ? index - (state.gridSize - 1) : null,
+    !onRight ? index + 1 : null,
+    !onBottom && !onRight ? index + state.gridSize + 1 : null,
+    !onBottom ? index + state.gridSize : null,
+    !onBottom && !onLeft ? index + (state.gridSize - 1) : null,
+    !onLeft ? index - 1 : null,
+    !onTop && !onLeft ? index - (state.gridSize + 1) : null,
+  ]);
 
-  return;
+  surroundingItems.delete(null);
+
+  const surroundingMines = surroundingItems.intersection(state.mines.locations);
+
+  return {
+    surroundingItems,
+    surroundingMines,
+  };
 }
 
 //! START GAME
 const GRID_SIZE = 9;
-const state = getInitialGameState(GRID_SIZE);
+const MINE_COUNT = 10;
+const state = new GameState({ gridSize: GRID_SIZE, mineCount: MINE_COUNT });
 
 setMineLocations({
   mineLocations: state.mines.locations,
