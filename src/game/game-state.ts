@@ -157,6 +157,7 @@ export default class GameState {
       surroundingCells.forEach((i) => this.uncoverGridItem(i));
     } else {
       mineCountEl.textContent = surroundingMines.size.toString();
+      mineCountEl.setAttribute('surrounding-count', surroundingMines.size.toString());
     }
   }
 
