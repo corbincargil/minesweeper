@@ -1,8 +1,10 @@
+import GameUI from "../ui/game-ui";
 import formatTime from "../utils/format-time";
 
 export default class GameState {
   score: number;
   status: "ready" | "active" | "won" | "lost";
+  private ui: GameUI;
   timer: {
     interval: any;
     running: boolean;
@@ -12,11 +14,11 @@ export default class GameState {
     revealedCells: Set<number>;
     size: number;
   };
-  flags: {
+  private flags: {
     remaining: number;
     locations: Set<number>;
   };
-  mines: {
+  private mines: {
     count: number;
     flagged: number;
     locations: Set<number>;
@@ -25,6 +27,7 @@ export default class GameState {
   constructor({ gridSize, mineCount }: { gridSize: number; mineCount: number }) {
     this.score = 0;
     this.status = "ready";
+    this.ui = new GameUI();
     this.timer = {
       interval: null,
       running: false,
@@ -86,12 +89,9 @@ export default class GameState {
   private startTimer() {
     if (this.timer.running) return;
 
-    const timerEl = document.querySelector(".scoreboard .time");
-    if (!timerEl) throw new Error("Could not find timer element");
-
     this.timer.interval = setInterval(() => {
       this.score++;
-      timerEl.textContent = formatTime(this.score);
+      this.ui.updateTimer(this.score);
     }, 100);
     this.timer.running = true;
   }
@@ -110,14 +110,13 @@ export default class GameState {
   private gameWon() {
     this.status = "won";
     this.stopTimer();
-    console.log(`YOU WIN!!!\n\nYour score is: ${formatTime(this.score)}`);
+    this.ui.updateStatus("won");
   }
 
   private gameLost() {
     this.status = "lost";
     this.stopTimer();
-    console.log("BOOM!!! 💣");
-    console.log(`YOU LOST\n\nYour score is: ${formatTime(this.score)}`);
+    this.ui.updateStatus("lost");
   }
 
   private checkWinningCondition() {
@@ -130,7 +129,7 @@ export default class GameState {
   }
 
   private uncoverGridItem(gridIndex: number | null) {
-    if (gridIndex === null) return;
+    if (gridIndex === null) return; //todo: update this to not be null
 
     const htmlItem = document.querySelector(`[data-index="${gridIndex}"]`) as HTMLDivElement;
 
@@ -157,7 +156,7 @@ export default class GameState {
       surroundingCells.forEach((i) => this.uncoverGridItem(i));
     } else {
       mineCountEl.textContent = surroundingMines.size.toString();
-      mineCountEl.setAttribute('surrounding-count', surroundingMines.size.toString());
+      mineCountEl.setAttribute("surrounding-count", surroundingMines.size.toString());
     }
   }
 
@@ -207,7 +206,6 @@ export default class GameState {
     }
 
     this.uncoverGridItem(index);
-    console.log("revealedCells", this.grid.revealedCells);
     this.checkWinningCondition();
   }
 
@@ -229,8 +227,6 @@ export default class GameState {
       return;
     }
 
-    console.log("flags remaining", this.flags.remaining);
-
     if (maxFlagsPlaced) {
       alert("No flags remaining");
       return;
@@ -238,6 +234,7 @@ export default class GameState {
 
     this.flags.locations.add(index);
     this.flags.remaining--;
+    this.ui.updateFlagCount(this.flags.remaining);
     gridElement.dataset.hasFlag = "true";
   }
 }
