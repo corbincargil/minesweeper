@@ -93,7 +93,7 @@ div.has-mine {
 .counter {
   padding: 6px;
   height: 100%;
-  width: 100px;
+  width: 160px;
   background-color: rgb(73, 18, 18);
   color: red;
   font-size: 3.5rem;
@@ -145,6 +145,10 @@ div.has-mine {
 
 .grid-item.revealed {
   background-color: rgb(151, 151, 151);
+}
+
+.grid-item.has-bomb {
+  border: 1px solid red;
 }
 
 img {

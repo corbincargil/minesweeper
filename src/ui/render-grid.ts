@@ -1,12 +1,12 @@
 export default function renderGrid(
-  gridArr: number[],
+  grid: Set<number>,
   handleLeftClick: (e: Event) => void,
   handleRightClick: (e: Event) => void
 ) {
   const gridEl = document.getElementById("grid");
   if (!gridEl) throw new Error("Could not find grid element");
 
-  gridArr.forEach((cell) => {
+  grid.forEach((cell) => {
     gridEl.append(createCellElement(cell, handleLeftClick, handleRightClick));
   });
 }

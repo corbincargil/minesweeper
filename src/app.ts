@@ -1,12 +1,15 @@
 import GameState from "./game/game-state";
 import renderGrid from "./ui/render-grid";
 
-// todo: Refactor code into different folders/files
-// todo: Make first click always safe
-// todo: Add a way to win
-// todo: Handle losing/clicking a mine
-// todo: Timer logic
+// todo: Refactor code into different folders/files ✅
+// todo: Timer logic ✅
+// todo: Make first click always safe ✅
+// todo: Add a way to win ✅
+// todo: Handle losing/clicking a mine ✅
 // todo: Dynamic flag count
+// todo: Prevent cheating
+// todo: Handle game reset
+// todo: Add multiple difficulties
 // todo:
 
 //! START GAME

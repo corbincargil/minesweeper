@@ -1,11 +1,19 @@
+import formatTime from "../utils/format-time";
+
 export default class GameState {
-  time: number;
+  score: number;
+  status: "ready" | "active" | "won" | "lost";
+  timer: {
+    interval: any;
+    running: boolean;
+  };
   grid: {
-    cells: number[];
+    cells: Set<number>;
+    revealedCells: Set<number>;
     size: number;
   };
   flags: {
-    placed: number;
+    remaining: number;
     locations: Set<number>;
   };
   mines: {
@@ -15,13 +23,19 @@ export default class GameState {
   };
 
   constructor({ gridSize, mineCount }: { gridSize: number; mineCount: number }) {
-    this.time = 0;
+    this.score = 0;
+    this.status = "ready";
+    this.timer = {
+      interval: null,
+      running: false,
+    };
     this.grid = {
       cells: this.createGrid(gridSize),
+      revealedCells: new Set(),
       size: gridSize,
     };
     this.flags = {
-      placed: 0,
+      remaining: mineCount,
       locations: new Set(),
     };
     this.mines = {
@@ -29,40 +43,90 @@ export default class GameState {
       flagged: 0,
       locations: new Set(),
     };
-    this.setMineLocations(this.grid.size, this.mines.count);
     this.handleLeftClick = this.handleLeftClick.bind(this);
     this.handleRightClick = this.handleRightClick.bind(this);
   }
 
-  private createGrid(size: number): number[] {
-    const grid: number[] = [];
+  private createGrid(size: number): Set<number> {
+    const grid: Set<number> = new Set();
 
     let index = 0;
 
     for (let x = 0; x < size; x++) {
       for (let y = 0; y < size; y++) {
-        grid.push(index);
+        grid.add(index);
         index++;
       }
     }
     return grid;
   }
 
-  private setMineLocations(gridSize: number, mineCount: number) {
+  private setMineLocations(gridSize: number, mineCount: number, safeCellIndex: number) {
     let minesPlaced = 0;
     while (minesPlaced < mineCount) {
       const randomIndex = Math.floor(Math.random() * gridSize * gridSize);
-      if (!this.mines.locations.has(randomIndex)) {
+      if (!this.mines.locations.has(randomIndex) && randomIndex !== safeCellIndex) {
         this.mines.locations.add(randomIndex);
+
+        //! remove after testing ⬇️
+        const htmlItem = document.querySelector(`[data-index="${randomIndex}"]`) as HTMLDivElement;
+
+        if (!htmlItem) {
+          console.error("Could not find grid item with index: ", randomIndex);
+          return;
+        }
+        htmlItem.classList.add("has-bomb");
+        //! remove after testing ⬆️
+
         minesPlaced++;
       }
     }
   }
 
-  startGame(safeCellIndex: number) {
-    //* set mine locations based on safeCellIndex
-    //* set surrounding cells for each cell
-    //* set surrounding mines for each cell
+  private startTimer() {
+    if (this.timer.running) return;
+
+    const timerEl = document.querySelector(".scoreboard .time");
+    if (!timerEl) throw new Error("Could not find timer element");
+
+    this.timer.interval = setInterval(() => {
+      this.score++;
+      timerEl.textContent = formatTime(this.score);
+    }, 100);
+    this.timer.running = true;
+  }
+
+  private stopTimer() {
+    clearInterval(this.timer.interval);
+    this.timer.running = false;
+  }
+
+  private startGame(safeCellIndex: number) {
+    this.status = "active";
+    this.startTimer();
+    this.setMineLocations(this.grid.size, this.mines.count, safeCellIndex);
+  }
+
+  private gameWon() {
+    this.status = "won";
+    this.stopTimer();
+    console.log(`YOU WIN!!!\n\nYour score is: ${formatTime(this.score)}`);
+  }
+
+  private gameLost() {
+    this.status = "lost";
+    this.stopTimer();
+    console.log("BOOM!!! 💣");
+    console.log(`YOU LOST\n\nYour score is: ${formatTime(this.score)}`);
+  }
+
+  private checkWinningCondition() {
+    const remainingCells = this.grid.cells.difference(this.grid.revealedCells);
+    const minesLocations = this.mines.locations;
+    if (remainingCells.size !== minesLocations.size) return;
+    if ([...remainingCells].every((item) => minesLocations.has(item))) {
+      this.gameWon();
+    }
   }
 
   private uncoverGridItem(gridIndex: number | null) {
@@ -79,6 +143,7 @@ export default class GameState {
 
     htmlItem.dataset.revealed = "true";
     htmlItem.classList.add("revealed");
+    this.grid.revealedCells.add(gridIndex);
 
     const { surroundingCells, surroundingMines } = this.getSurroundingCells(gridIndex, this.grid.size);
 
@@ -121,9 +186,7 @@ export default class GameState {
 
   public handleLeftClick(e: Event) {
     const clickedItem = e.target as HTMLElement;
-
     const gridItem = (clickedItem.closest(".grid-item") as HTMLDivElement) || null;
-
     if (!gridItem) {
       console.error("Can't find grid item");
       return;
@@ -131,32 +194,41 @@ export default class GameState {
 
     const index = Number(gridItem.dataset.index);
 
+    if (this.status === "ready") this.startGame(index);
+
+    if (this.status !== "active") return;
+
     if (this.flags.locations.has(index)) return;
 
     if (this.mines.locations.has(index)) {
-      console.log("BOOM!!! 💣");
+      this.gameLost();
       return;
     }
 
     this.uncoverGridItem(index);
+    console.log("revealedCells", this.grid.revealedCells);
+    this.checkWinningCondition();
   }
 
   public handleRightClick(e: Event) {
     e.preventDefault();
+    if (this.status !== "active") return;
 
     //? Add question mark capabilities
     const gridElement = e.target as HTMLDivElement;
     const index = Number(gridElement.dataset.index);
     const hasFlag = this.flags.locations.has(index);
-    const maxFlagsPlaced = this.flags.placed >= this.mines.count;
+    const maxFlagsPlaced = this.flags.remaining <= 0;
 
     if (hasFlag) {
       this.flags.locations.delete(index);
-      this.flags.placed--;
+      this.flags.remaining++;
 
       gridElement.removeAttribute("data-has-flag");
       return;
     }
+
+    console.log("flags remaining", this.flags.remaining);
 
     if (maxFlagsPlaced) {
       alert("No flags remaining");
@@ -164,7 +236,7 @@ export default class GameState {
     }
 
     this.flags.locations.add(index);
-    this.flags.placed++;
+    this.flags.remaining--;
     gridElement.dataset.hasFlag = "true";
   }
 }
